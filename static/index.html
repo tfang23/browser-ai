@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Browser AI</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', monospace;
+            background: #0d1117;
+            color: #c9d1d9;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .header {
+            background: #161b22;
+            border-bottom: 1px solid #30363d;
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+        }
+        
+        .header-left {
+            color: #8b949e;
+        }
+        
+        .header-title {
+            color: #58a6ff;
+            font-weight: 600;
+        }
+        
+        .token-pill {
+            background: #238636;
+            color: #fff;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        
+        .token-pill:hover {
+            background: #2ea043;
+        }
+        
+        .terminal {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        .line {
+            margin-bottom: 4px;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        
+        .line.welcome {
+            color: #8b949e;
+            margin-bottom: 16px;
+        }
+        
+        .line.input {
+            display: flex;
+            align-items: flex-start;
+        }
+        
+        .prompt {
+            color: #7ee787;
+            margin-right: 8px;
+            flex-shrink: 0;
+        }
+        
+        .user-text {
+            color: #c9d1d9;
+        }
+        
+        .line.output {
+            color: #c9d1d9;
+            margin-left: 0;
+        }
+        
+        .line.output.success {
+            color: #7ee787;
+        }
+        
+        .line.output.error {
+            color: #f85149;
+        }
+        
+        .line.output.warning {
+            color: #ffa657;
+        }
+        
+        .line.output.info {
+            color: #58a6ff;
+        }
+        
+        .typing {
+            color: #8b949e;
+        }
+        
+        .input-area {
+            background: #161b22;
+            border-top: 1px solid #30363d;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .input-prompt {
+            color: #7ee787;
+            font-size: 14px;
+        }
+        
+        .input-field {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: #c9d1d9;
+            font-family: inherit;
+            font-size: 14px;
+            outline: none;
+            caret-color: #7ee787;
+        }
+        
+        .input-field::placeholder {
+            color: #484f58;
+        }
+        
+        .timestamp {
+            color: #6e7681;
+            font-size: 12px;
+            margin-right: 8px;
+        }
+        
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #0d1117;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #30363d;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-left">
+            <span class="header-title">browser-ai</span>
+            <span style="margin-left: 8px; color: #484f58;">~</span>
+        </div>
+        <div class="token-pill" onclick="addTokens()">
+            <span id="tokenCount">300</span> tokens +
+        </div>
+    </div>
+    
+    <div class="terminal" id="terminal">
+        <div class="line welcome">
+I can run long-horizon browser tasks for you:
+  • Monitor ticket prices
+  • Book restaurant reservations  
+  • Check fashion inventory
+  • Track flight prices
+
+Type what you need. I'll handle the rest.
+        </div>
+    </div>
+    
+    <div class="input-area">
+        <span class="input-prompt">❯</span>
+        <input type="text" class="input-field" id="input" placeholder="Book French Laundry for 4..." autofocus>
+    </div>
+    
+    <script>
+        const terminal = document.getElementById('terminal');
+        const input = document.getElementById('input');
+        let tokenCount = 300;
+        let isProcessing = false;
+        
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !isProcessing && input.value.trim()) {
+                processCommand(input.value.trim());
+                input.value = '';
+            }
+        });
+        
+        function processCommand(text) {
+            isProcessing = true;
+            
+            // Echo user input
+            addLine(text, 'input');
+            
+            // Show typing indicator
+            const typingId = 'typing-' + Date.now();
+            addLine('...', 'typing', typingId);
+            
+            // Simulate processing
+            setTimeout(() => {
+                removeLine(typingId);
+                
+                const lower = text.toLowerCase();
+                let response = '';
+                let type = 'output';
+                
+                if (lower.includes('french laundry') || lower.includes('restaurant')) {
+                    response = 'French Laundry: Fully booked. Waitlist available.\nMonitor for cancellations? (y/n)';
+                    type = 'output warning';
+                } else if (lower.includes('taylor swift') || lower.includes('ticket')) {
+                    response = 'Eras Tour SF: Sale starts March 15, 10am.\nQueue up when live? (y/n)';
+                    type = 'output info';
+                } else if (lower.includes('nike') || lower.includes('dunk') || lower.includes('shoe')) {
+                    response = 'Dunk Low Panda: Out of stock.\nWatch for restock? (y/n)';
+                    type = 'output warning';
+                } else if (lower.includes('flight') || lower.includes('tokyo') || lower.includes('jfk')) {
+                    response = 'JFK → NRT: $789 United, $845 ANA, $899 JAL.\nBuy now or watch for lower? (buy/watch)';
+                    type = 'output success';
+                } else if (lower === 'y' || lower === 'yes') {
+                    response = 'Monitoring. 30min checks. 7 days. ~168 tokens.';
+                    tokenCount -= 168;
+                    updateTokens();
+                    type = 'output success';
+                } else if (lower === 'n' || lower === 'no') {
+                    response = 'Got it.';
+                } else if (lower === 'buy') {
+                    response = 'Booking... (would need your info)';
+                } else if (lower === 'watch') {
+                    response = 'Watching. 1hr checks. 14 days. ~336 tokens.';
+                    tokenCount -= 336;
+                    updateTokens();
+                    type = 'output success';
+                } else {
+                    response = 'Checking... (simulated)\nResult: Item unavailable.\nMonitor? (y/n)';
+                    type = 'output warning';
+                }
+                
+                addLine(response, type);
+                isProcessing = false;
+            }, 1500);
+        }
+        
+        function addLine(text, type, id) {
+            const line = document.createElement('div');
+            line.className = 'line ' + type;
+            if (id) line.id = id;
+            
+            const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            
+            if (type === 'input') {
+                line.innerHTML = `<span class="timestamp">${time}</span><span class="prompt">❯</span><span class="user-text">${escapeHtml(text)}</span>`;
+            } else if (type === 'typing') {
+                line.innerHTML = `<span class="timestamp">${time}</span><span class="typing">...</span>`;
+            } else {
+                line.innerHTML = `<span class="timestamp">${time}</span>${escapeHtml(text)}`;
+            }
+            
+            terminal.appendChild(line);
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+        
+        function removeLine(id) {
+            const line = document.getElementById(id);
+            if (line) line.remove();
+        }
+        
+        function escapeHtml(text) {
+            return text.replace(/\n/g, '<br>');
+        }
+        
+        function updateTokens() {
+            document.getElementById('tokenCount').textContent = tokenCount;
+        }
+        
+        function addTokens() {
+            tokenCount += 1000;
+            updateTokens();
+            addLine('+1000 tokens added', 'output success');
+        }
+        
+        // Focus input on load
+        input.focus();
+        document.addEventListener('click', () => input.focus());
+    </script>
+</body>
+</html>
