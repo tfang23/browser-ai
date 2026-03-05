@@ -9,12 +9,39 @@ iOS App (Thin Client)
     ↓ HTTP/WebSocket
 FastAPI Server
     ↓
+User Management (Token balances, encrypted credentials)
+    ↓
+Persistent Task Scheduler (Monitoring & booking)
+    ↓
 Task Queue (Redis or in-memory)
     ↓
 Agent Pool (3 concurrent workers)
     ↓
 browser-use + Playwright + OpenRouter (Kimi 2.5)
 ```
+
+## Key Features
+
+### Token Economy
+- **300 free tokens** for new users (enough for ~1 simple task or ~6 checks)
+- **Buy token packages** when depleted
+- **Cost estimation** before starting any task
+- **Variable check frequency** — user chooses speed vs cost tradeoff
+
+### Secure Credential Storage
+- **AES-256-GCM encryption** for all user credentials
+- **Per-user derived keys** — no master key exposure
+- **Service-specific credentials** — Tock, Nike, Ticketmaster, etc.
+- **Audit logging** for all credential access
+
+### General-Purpose Tasks
+| Task Type | Example | Check Frequency |
+|-----------|---------|-----------------|
+| Restaurant | "Book French Laundry" | Every 30 min |
+| Tickets | "Get Taylor Swift tickets" | Every 5 min |
+| Retail Drop | "Buy limited Nike Dunks" | Every 1 min |
+| Flight | "Book JFK-Tokyo when price drops" | Every hour |
+| Hotel | "Reserve Aman Tokyo" | Every 6 hours |
 
 ## Quick Start
 
@@ -38,11 +65,14 @@ Create `.env` file:
 
 ```bash
 OPENROUTER_API_KEY=your_openrouter_api_key_here
+CREDENTIAL_MASTER_KEY=your_encryption_key_here  # For credential encryption
 REDIS_URL=redis://localhost:6379/0  # Optional - falls back to in-memory
 AGENT_POOL_SIZE=3
 ```
 
 Get your OpenRouter API key at [openrouter.ai/keys](https://openrouter.ai/keys)
+
+Generate a random credential master key: `openssl rand -base64 32`
 
 ### 3. Run the API Server
 
@@ -59,7 +89,21 @@ export OPENROUTER_API_KEY=your_key_here
 # Health check
 curl http://localhost:8000/health
 
-# Create a task
+# Create a user (gets 300 free tokens)
+curl -X POST http://localhost:8000/users/ \
+  -H "Content-Type: application/json" \
+  -d '{"email": "user@example.com"}'
+
+# Estimate token cost for a restaurant booking
+curl -X POST http://localhost:8000/users/user_xxx/estimate-tokens \
+  -H "Content-Type: application/json" \
+  -d '{
+    "task_type": "restaurant",
+    "check_frequency_minutes": 30,
+    "max_duration_days": 7
+  }'
+
+# Create a simple task
 curl -X POST http://localhost:8000/tasks \
   -H "Content-Type: application/json" \
   -d '{
@@ -67,14 +111,8 @@ curl -X POST http://localhost:8000/tasks \
     "context": {"user_name": "Test User"}
   }'
 
-# Response:
-# {"task_id":"task_abc123","status":"pending","prompt":"..."}
-
 # Check task status
 curl http://localhost:8000/tasks/task_abc123
-
-# List all tasks
-curl http://localhost:8000/tasks?limit=10
 ```
 
 ## API Endpoints
@@ -123,19 +161,42 @@ curl -X POST http://localhost:8000/tasks -H "Content-Type: application/json" -d 
 | `REDIS_URL` | None | Redis connection string (in-memory if not set) |
 | `AGENT_POOL_SIZE` | 3 | Concurrent browser agents |
 
-## Cost Estimates
+## Token Economy
 
-Per-task costs (approximate via OpenRouter):
+### Free Starting Balance
+Every new user gets **300 tokens** — enough for:
+- ~6 availability checks, OR
+- ~1 complete booking (if available quickly)
 
-- **Kimi 2.5**: ~$0.003/1K input tokens, ~$0.015/1K output tokens
-- **Typical task**: 10-30K tokens = ~$0.30-$1.50
-- **Browser session**: ~$0.02/hour of cloud compute
-- **Your markup**: 100-200% on top
+### Token Costs
+| Action | Tokens | ~USD |
+|--------|--------|------|
+| Quick check (sold out?) | 50 | $0.50 |
+| Detailed check (browse & analyze) | 100 | $1.00 |
+| Login flow | 150 | $1.50 |
+| Full booking attempt | 200 | $2.00 |
+| Vision analysis (screenshot) | 75 | $0.75 |
 
-Example pricing to user:
-- Simple lookup: $1.00
-- Complex multi-step: $3.00
-- Subscription: $20/month for 10 tasks + $2 overage
+### Example Estimates
+
+**Restaurant reservation** (30 min checks, 7 days):
+- 336 checks × 50 tokens = 16,800 tokens
+- ~1 booking attempt = 200 tokens
+- **Total: ~17,000 tokens = ~$17**
+
+**Limited shoe drop** (1 min checks, 24 hours):
+- 1,440 checks × 50 tokens = 72,000 tokens
+- High anti-bot complexity × 1.5 = 108,000 tokens
+- ~3 booking attempts = 600 tokens
+- **Total: ~108,600 tokens = ~$108**
+
+### Token Packages
+| Package | Tokens | Price | Bonus | Total |
+|---------|--------|-------|-------|-------|
+| Starter | 500 | $4.99 | 100 | 600 |
+| Standard | 1,500 | $9.99 | 300 | 1,800 |
+| Power | 5,000 | $24.99 | 1,000 | 6,000 |
+| Enterprise | 20,000 | $79.99 | 5,000 | 25,000 |
 
 ## Limitations (PoC)
 

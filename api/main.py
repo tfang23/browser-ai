@@ -7,11 +7,13 @@ from typing import Optional, Dict, Any, List
 from datetime import datetime
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi import FastAPI, HTTPException, BackgroundTasks, APIRouter
 from pydantic import BaseModel, Field
 
 from agent.core import AgentPool
 from scheduler.queue import TaskQueue
+from scheduler.persistent import PersistentTask, TaskStatus
+from api.users import router as users_router
 
 
 # Global state (simplified for PoC)
@@ -62,9 +64,12 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Web Agent API",
     description="AI-powered web automation using browser-use + Kimi 2.5",
-    version="0.1.0",
+    version="0.2.0",
     lifespan=lifespan
 )
+
+# Include user management routes
+app.include_router(users_router)
 
 
 def _generate_task_id() -> str:
