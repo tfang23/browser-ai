@@ -1,4 +1,4 @@
-# Browser AI
+# BrowserOps!
 
 Autonomous web agent for long-horizon browser tasks. Executes commands, monitors availability, completes purchases.
 
