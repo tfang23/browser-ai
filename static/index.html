@@ -5,14 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Browser AI</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', monospace;
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace;
             background: #0d1117;
             color: #c9d1d9;
             height: 100vh;
@@ -20,7 +15,6 @@
             flex-direction: column;
             overflow: hidden;
         }
-        
         .header {
             background: #161b22;
             border-bottom: 1px solid #30363d;
@@ -30,16 +24,7 @@
             align-items: center;
             font-size: 13px;
         }
-        
-        .header-left {
-            color: #8b949e;
-        }
-        
-        .header-title {
-            color: #58a6ff;
-            font-weight: 600;
-        }
-        
+        .header-title { color: #58a6ff; font-weight: 600; }
         .token-pill {
             background: #238636;
             color: #fff;
@@ -48,70 +33,31 @@
             font-size: 12px;
             cursor: pointer;
         }
-        
-        .token-pill:hover {
-            background: #2ea043;
-        }
-        
+        .token-pill:hover { background: #2ea043; }
+        .token-pill.warning { background: #d29922; }
+        .token-pill.danger { background: #da3633; }
         .terminal {
             flex: 1;
             overflow-y: auto;
             padding: 16px;
             font-size: 14px;
-            line-height: 1.6;
+            line-height: 1.5;
         }
-        
         .line {
-            margin-bottom: 4px;
+            margin-bottom: 2px;
             white-space: pre-wrap;
             word-break: break-word;
         }
-        
-        .line.welcome {
-            color: #8b949e;
-            margin-bottom: 16px;
-        }
-        
-        .line.input {
-            display: flex;
-            align-items: flex-start;
-        }
-        
-        .prompt {
-            color: #7ee787;
-            margin-right: 8px;
-            flex-shrink: 0;
-        }
-        
-        .user-text {
-            color: #c9d1d9;
-        }
-        
-        .line.output {
-            color: #c9d1d9;
-            margin-left: 0;
-        }
-        
-        .line.output.success {
-            color: #7ee787;
-        }
-        
-        .line.output.error {
-            color: #f85149;
-        }
-        
-        .line.output.warning {
-            color: #ffa657;
-        }
-        
-        .line.output.info {
-            color: #58a6ff;
-        }
-        
-        .typing {
-            color: #8b949e;
-        }
-        
+        .line.welcome { color: #8b949e; margin-bottom: 12px; }
+        .timestamp { color: #6e7681; font-size: 12px; margin-right: 8px; }
+        .prompt { color: #7ee787; margin-right: 8px; }
+        .input-line { color: #c9d1d9; }
+        .output { color: #c9d1d9; }
+        .output.success { color: #7ee787; }
+        .output.error { color: #f85149; }
+        .output.warning { color: #ffa657; }
+        .output.info { color: #58a6ff; }
+        .output.dim { color: #8b949e; }
         .input-area {
             background: #161b22;
             border-top: 1px solid #30363d;
@@ -120,12 +66,6 @@
             align-items: center;
             gap: 12px;
         }
-        
-        .input-prompt {
-            color: #7ee787;
-            font-size: 14px;
-        }
-        
         .input-field {
             flex: 1;
             background: transparent;
@@ -136,168 +76,178 @@
             outline: none;
             caret-color: #7ee787;
         }
-        
-        .input-field::placeholder {
-            color: #484f58;
-        }
-        
-        .timestamp {
-            color: #6e7681;
-            font-size: 12px;
-            margin-right: 8px;
-        }
-        
-        /* Scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        
-        ::-webkit-scrollbar-track {
-            background: #0d1117;
-        }
-        
-        ::-webkit-scrollbar-thumb {
-            background: #30363d;
-            border-radius: 4px;
-        }
+        .input-field::placeholder { color: #484f58; }
+        .input-field:disabled { opacity: 0.5; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0d1117; }
+        ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 4px; }
     </style>
 </head>
 <body>
     <div class="header">
-        <div class="header-left">
+        <div>
             <span class="header-title">browser-ai</span>
             <span style="margin-left: 8px; color: #484f58;">~</span>
         </div>
-        <div class="token-pill" onclick="addTokens()">
-            <span id="tokenCount">300</span> tokens +
+        <div class="token-pill" id="tokenPill" onclick="addTokens()">
+            <span id="tokenCount">300</span> tk +
         </div>
     </div>
     
     <div class="terminal" id="terminal">
         <div class="line welcome">
-I can run long-horizon browser tasks for you:
-  • Monitor ticket prices
-  • Book restaurant reservations  
-  • Check fashion inventory
-  • Track flight prices
+Long-horizon browser tasks:
+  • Monitor prices, reservations, inventory
+  • Execute when available
+  • Pay only for what you use
 
-Type what you need. I'll handle the rest.
+Type a task. Press enter.
         </div>
     </div>
     
     <div class="input-area">
-        <span class="input-prompt">❯</span>
-        <input type="text" class="input-field" id="input" placeholder="Book French Laundry for 4..." autofocus>
+        <span class="prompt">$</span>
+        <input type="text" class="input-field" id="input" placeholder="book french laundry for 4..." autofocus autocomplete="off">
     </div>
     
     <script>
+        const API_URL = 'http://localhost:8000';
         const terminal = document.getElementById('terminal');
         const input = document.getElementById('input');
+        const tokenPill = document.getElementById('tokenPill');
         let tokenCount = 300;
         let isProcessing = false;
+        let sessionId = localStorage.getItem('bai_session') || generateId();
+        let userId = localStorage.getItem('bai_user') || generateId();
         
-        input.addEventListener('keydown', (e) => {
+        localStorage.setItem('bai_session', sessionId);
+        localStorage.setItem('bai_user', userId);
+        
+        function generateId() {
+            return Math.random().toString(36).substring(2, 15);
+        }
+        
+        function getTime() {
+            return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+        
+        input.addEventListener('keydown', async (e) => {
             if (e.key === 'Enter' && !isProcessing && input.value.trim()) {
-                processCommand(input.value.trim());
+                const text = input.value.trim();
                 input.value = '';
+                await processCommand(text);
             }
         });
         
-        function processCommand(text) {
+        async function processCommand(text) {
             isProcessing = true;
+            input.disabled = true;
             
-            // Echo user input
-            addLine(text, 'input');
+            // Echo input
+            addLine(`${getTime()} <span class="prompt">$</span> <span class="input-line">${escapeHtml(text)}</span>`);
             
-            // Show typing indicator
-            const typingId = 'typing-' + Date.now();
-            addLine('...', 'typing', typingId);
+            // Working message
+            addLine(`${getTime()} <span class="output dim">→ checking... (come back later, this may take a moment)</span>`);
             
-            // Simulate processing
-            setTimeout(() => {
-                removeLine(typingId);
+            try {
+                const response = await fetch(`${API_URL}/chat/message`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: userId,
+                        message: text,
+                        session_id: sessionId
+                    })
+                });
                 
-                const lower = text.toLowerCase();
-                let response = '';
-                let type = 'output';
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 
-                if (lower.includes('french laundry') || lower.includes('restaurant')) {
-                    response = 'French Laundry: Fully booked. Waitlist available.\nMonitor for cancellations? (y/n)';
-                    type = 'output warning';
-                } else if (lower.includes('taylor swift') || lower.includes('ticket')) {
-                    response = 'Eras Tour SF: Sale starts March 15, 10am.\nQueue up when live? (y/n)';
-                    type = 'output info';
-                } else if (lower.includes('nike') || lower.includes('dunk') || lower.includes('shoe')) {
-                    response = 'Dunk Low Panda: Out of stock.\nWatch for restock? (y/n)';
-                    type = 'output warning';
-                } else if (lower.includes('flight') || lower.includes('tokyo') || lower.includes('jfk')) {
-                    response = 'JFK → NRT: $789 United, $845 ANA, $899 JAL.\nBuy now or watch for lower? (buy/watch)';
-                    type = 'output success';
-                } else if (lower === 'y' || lower === 'yes') {
-                    response = 'Monitoring. 30min checks. 7 days. ~168 tokens.';
-                    tokenCount -= 168;
-                    updateTokens();
-                    type = 'output success';
-                } else if (lower === 'n' || lower === 'no') {
-                    response = 'Got it.';
-                } else if (lower === 'buy') {
-                    response = 'Booking... (would need your info)';
-                } else if (lower === 'watch') {
-                    response = 'Watching. 1hr checks. 14 days. ~336 tokens.';
-                    tokenCount -= 336;
-                    updateTokens();
-                    type = 'output success';
-                } else {
-                    response = 'Checking... (simulated)\nResult: Item unavailable.\nMonitor? (y/n)';
-                    type = 'output warning';
+                const data = await response.json();
+                
+                // Remove the "checking..." line
+                removeLastLine();
+                
+                // Display response (handle line breaks)
+                const formattedResponse = escapeHtml(data.response).replace(/\n/g, '<br>');
+                let typeClass = 'output';
+                if (data.state === 'asking_monitor') typeClass = 'output warning';
+                else if (data.state === 'monitoring') typeClass = 'output success';
+                else if (data.state === 'idle' && data.response.includes('Insufficient')) typeClass = 'output error';
+                
+                addLine(`${getTime()} <span class="${typeClass}">${formattedResponse}</span>`);
+                
+                // Handle actions/buttons
+                if (data.actions && data.actions.length > 0) {
+                    const actionHtml = data.actions.map(a => 
+                        `<span style="color: #7ee787; cursor: pointer;" onclick="sendAction('${a.value}')">[${a.label}]</span>`
+                    ).join(' ');
+                    addLine(`${getTime()} <span class="output dim">${actionHtml}</span>`);
                 }
                 
-                addLine(response, type);
-                isProcessing = false;
-            }, 1500);
-        }
-        
-        function addLine(text, type, id) {
-            const line = document.createElement('div');
-            line.className = 'line ' + type;
-            if (id) line.id = id;
-            
-            const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            
-            if (type === 'input') {
-                line.innerHTML = `<span class="timestamp">${time}</span><span class="prompt">❯</span><span class="user-text">${escapeHtml(text)}</span>`;
-            } else if (type === 'typing') {
-                line.innerHTML = `<span class="timestamp">${time}</span><span class="typing">...</span>`;
-            } else {
-                line.innerHTML = `<span class="timestamp">${time}</span>${escapeHtml(text)}`;
+                // Update session
+                if (data.session_id) sessionId = data.session_id;
+                
+            } catch (error) {
+                removeLastLine();
+                addLine(`${getTime()} <span class="output error">Error: ${escapeHtml(error.message)}</span>`);
+                addLine(`${getTime()} <span class="output dim">Is the backend running on localhost:8000?</span>`);
             }
             
+            isProcessing = false;
+            input.disabled = false;
+            input.focus();
+        }
+        
+        async function sendAction(value) {
+            input.value = value;
+            input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+        }
+        
+        function addLine(html) {
+            const line = document.createElement('div');
+            line.className = 'line';
+            line.innerHTML = html;
             terminal.appendChild(line);
             terminal.scrollTop = terminal.scrollHeight;
         }
         
-        function removeLine(id) {
-            const line = document.getElementById(id);
-            if (line) line.remove();
+        function removeLastLine() {
+            const lines = terminal.querySelectorAll('.line');
+            if (lines.length > 0) {
+                const last = lines[lines.length - 1];
+                if (last.textContent.includes('checking')) last.remove();
+            }
         }
         
         function escapeHtml(text) {
-            return text.replace(/\n/g, '<br>');
+            return text
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
         }
         
         function updateTokens() {
             document.getElementById('tokenCount').textContent = tokenCount;
+            if (tokenCount < 50) tokenPill.className = 'token-pill danger';
+            else if (tokenCount < 150) tokenPill.className = 'token-pill warning';
+            else tokenPill.className = 'token-pill';
         }
         
         function addTokens() {
             tokenCount += 1000;
             updateTokens();
-            addLine('+1000 tokens added', 'output success');
+            addLine(`${getTime()} <span class="output success">+1000 tokens added (demo only)</span>`);
         }
         
-        // Focus input on load
+        // Expose for inline onclick
+        window.sendAction = sendAction;
+        window.addTokens = addTokens;
+        
+        // Focus input
         input.focus();
-        document.addEventListener('click', () => input.focus());
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.token-pill')) input.focus();
+        });
     </script>
 </body>
 </html>

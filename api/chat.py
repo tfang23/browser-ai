@@ -238,6 +238,7 @@ async def _create_persistent_task(user_id: str, original_prompt: str, frequency:
     """
     task_id = f"task_{uuid.uuid4().hex[:12]}"
     
+    from datetime import timedelta
     task = PersistentTask(
         task_id=task_id,
         user_id=user_id,
@@ -245,7 +246,7 @@ async def _create_persistent_task(user_id: str, original_prompt: str, frequency:
         goal=original_prompt,
         context={},
         check_interval_minutes=frequency,
-        expires_at=(datetime.utcnow() + __import__('datetime').timedelta(days=duration)).isoformat(),
+        expires_at=(datetime.utcnow() + timedelta(days=duration)).isoformat(),
         status=TaskStatus.PENDING.value
     )
     

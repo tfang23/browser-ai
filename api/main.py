@@ -8,6 +8,7 @@ from datetime import datetime
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, BackgroundTasks, APIRouter
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from agent.core import AgentPool
@@ -67,6 +68,15 @@ app = FastAPI(
     description="AI-powered web automation using browser-use + Kimi 2.5",
     version="0.2.0",
     lifespan=lifespan
+)
+
+# CORS for web frontend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Include user management routes
