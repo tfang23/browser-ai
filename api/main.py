@@ -14,6 +14,7 @@ from agent.core import AgentPool
 from scheduler.queue import TaskQueue
 from scheduler.persistent import PersistentTask, TaskStatus
 from api.users import router as users_router
+from api.chat import router as chat_router
 
 
 # Global state (simplified for PoC)
@@ -70,6 +71,7 @@ app = FastAPI(
 
 # Include user management routes
 app.include_router(users_router)
+app.include_router(chat_router)
 
 
 def _generate_task_id() -> str:
