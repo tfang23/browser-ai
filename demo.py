@@ -3,7 +3,7 @@
 Demo script to test the agent directly without running the full API.
 
 Usage:
-    export FIREWORKS_API_KEY=your_key
+    export OPENROUTER_API_KEY=your_key
     python demo.py "Find the price of iPhone 16 on apple.com"
 """
 import asyncio
@@ -18,11 +18,11 @@ from agent.core import WebAgent
 
 async def main():
     """Run a demo task."""
-    api_key = os.getenv("FIREWORKS_API_KEY")
+    api_key = os.getenv("OPENROUTER_API_KEY")
     
     if not api_key:
-        print("Error: Set FIREWORKS_API_KEY environment variable")
-        print("export FIREWORKS_API_KEY=fw_your_key_here")
+        print("Error: Set OPENROUTER_API_KEY environment variable")
+        print("export OPENROUTER_API_KEY=sk-or-v1-...")
         sys.exit(1)
     
     # Get task from command line or use default
@@ -33,7 +33,7 @@ async def main():
     print(f"{'='*60}\n")
     
     # Create agent and execute
-    agent = WebAgent(fireworks_api_key=api_key)
+    agent = WebAgent(openrouter_api_key=api_key)
     
     try:
         result = await agent.execute_task(

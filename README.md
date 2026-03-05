@@ -13,7 +13,7 @@ Task Queue (Redis or in-memory)
     ↓
 Agent Pool (3 concurrent workers)
     ↓
-browser-use + Playwright + Kimi 2.5
+browser-use + Playwright + OpenRouter (Kimi 2.5)
 ```
 
 ## Quick Start
@@ -37,10 +37,12 @@ playwright install chromium
 Create `.env` file:
 
 ```bash
-FIREWORKS_API_KEY=your_fireworks_api_key_here
+OPENROUTER_API_KEY=your_openrouter_api_key_here
 REDIS_URL=redis://localhost:6379/0  # Optional - falls back to in-memory
 AGENT_POOL_SIZE=3
 ```
+
+Get your OpenRouter API key at [openrouter.ai/keys](https://openrouter.ai/keys)
 
 ### 3. Run the API Server
 
@@ -52,6 +54,8 @@ uvicorn api.main:app --reload --host 0.0.0.0 --port 8000
 ### 4. Test the API
 
 ```bash
+export OPENROUTER_API_KEY=your_key_here
+
 # Health check
 curl http://localhost:8000/health
 
@@ -121,9 +125,10 @@ curl -X POST http://localhost:8000/tasks -H "Content-Type: application/json" -d 
 
 ## Cost Estimates
 
-Per-task costs (approximate):
+Per-task costs (approximate via OpenRouter):
 
-- **Kimi 2.5 (Fireworks)**: ~$0.30-$1.50 depending on task complexity
+- **Kimi 2.5**: ~$0.003/1K input tokens, ~$0.015/1K output tokens
+- **Typical task**: 10-30K tokens = ~$0.30-$1.50
 - **Browser session**: ~$0.02/hour of cloud compute
 - **Your markup**: 100-200% on top
 
@@ -172,5 +177,6 @@ poc-agent/
 ## Resources
 
 - [browser-use](https://github.com/browser-use/browser-use) - AI-native web agent framework
-- [Fireworks Kimi 2.5](https://fireworks.ai/models/fireworks/kimi-k2p5) - Base model
+- [OpenRouter](https://openrouter.ai/) - Unified API for LLMs (including Kimi 2.5 via Fireworks)
+- [Kimi 2.5 on OpenRouter](https://openrouter.ai/moonshotai/kimi-k2.5) - Base model
 - [Playwright](https://playwright.dev/) - Browser automation

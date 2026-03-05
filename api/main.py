@@ -48,7 +48,7 @@ async def lifespan(app: FastAPI):
     # Initialize on startup
     agent_pool = AgentPool(
         pool_size=int(os.getenv("AGENT_POOL_SIZE", "3")),
-        fireworks_api_key=os.getenv("FIREWORKS_API_KEY")
+        openrouter_api_key=os.getenv("OPENROUTER_API_KEY")
     )
     task_queue = TaskQueue()
     
