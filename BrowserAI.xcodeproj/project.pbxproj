@@ -1,0 +1,15 @@
+{
+  "object": {
+    "pins": [],
+    "buildConfigurationList": "",
+    "targets": [],
+    "schemes": [],
+    "defaultOptions": {},
+    "variantGroup": "",
+    "references": [],
+    "buildPhases": []
+  },
+  "archiveVersion": "1",
+  "classes": {},
+  "objectVersion": "56"
+}
