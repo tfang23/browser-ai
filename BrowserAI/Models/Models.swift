@@ -2,7 +2,7 @@
 //  Models.swift
 //  BrowserAI
 //
-//  Data models for the app
+//  Data models for API communication
 //
 
 import Foundation
@@ -11,94 +11,82 @@ import Foundation
 
 struct User: Codable, Identifiable {
     let id: String
-    let email: String
-    let phone: String?
+    let email: String?
     var tokenBalance: Int
-    let createdAt: String
+    let createdAt: Date
     
-    var formattedBalance: String {
-        return "\(tokenBalance)"
+    enum CodingKeys: String, CodingKey {
+        case id, email
+        case tokenBalance = "token_balance"
+        case createdAt = "created_at"
     }
 }
 
-// MARK: - Task
+// MARK: - Chat
 
-enum TaskStatus: String, Codable {
-    case pending = "pending"
-    case monitoring = "monitoring"
-    case available = "available"
-    case booking = "booking"
-    case completed = "completed"
-    case failed = "failed"
-    case expired = "expired"
-}
-
-enum TaskType: String, Codable, CaseIterable {
-    case restaurant = "restaurant"
-    case ticket = "ticket"
-    case retail = "retail_drop"
-    case flight = "flight"
-    case hotel = "hotel"
-    case other = "other"
-    
-    var displayName: String {
-        switch self {
-        case .restaurant: return "Restaurant"
-        case .ticket: return "Tickets"
-        case .retail: return "Limited Drop"
-        case .flight: return "Flight"
-        case .hotel: return "Hotel"
-        case .other: return "Other"
-        }
-    }
-    
-    var icon: String {
-        switch self {
-        case .restaurant: return "fork.knife"
-        case .ticket: return "ticket.fill"
-        case .retail: return "shoe.fill"
-        case .flight: return "airplane"
-        case .hotel: return "bed.double.fill"
-        case .other: return "star.fill"
-        }
-    }
-}
-
-struct AgentTask: Codable, Identifiable {
-    let id: String
+struct ChatMessageRequest: Codable {
     let userId: String
-    let type: TaskType
-    let goal: String
-    let status: TaskStatus
-    let checkFrequencyMinutes: Int
-    let createdAt: String
-    let expiresAt: String?
-    let estimatedTokens: Int?
-    let lastCheckAt: String?
-    let lastCheckResult: String?
+    let message: String
+    let sessionId: String?
+}
+
+struct ChatMessageResponse: Codable {
+    let sessionId: String
+    let response: String
+    let state: String
+    let result: TaskResult?
+    let actions: [ChatAction]?
     
-    var statusDisplay: String {
-        switch status {
-        case .pending: return "Starting..."
-        case .monitoring: return "Monitoring"
-        case .available: return "Available!"
-        case .booking: return "Booking..."
-        case .completed: return "Done"
-        case .failed: return "Failed"
-        case .expired: return "Expired"
+    enum CodingKeys: String, CodingKey {
+        case sessionId = "session_id"
+        case response, state, result, actions
+    }
+}
+
+struct TaskResult: Codable {
+    let success: Bool
+    let summary: String?
+    let error: String?
+}
+
+struct ChatAction: Codable, Identifiable {
+    let id = UUID()
+    let label: String
+    let value: String
+}
+
+// MARK: - Terminal Line
+
+struct TerminalLine: Identifiable, Equatable {
+    let id = UUID()
+    let timestamp: Date
+    let content: String
+    let type: LineType
+    
+    enum LineType: Equatable {
+        case welcome
+        case input(String)  // the raw input text
+        case output(OutputType)
+        case actionButtons([ChatAction])
+        
+        enum OutputType: Equatable {
+            case normal
+            case success
+            case error
+            case warning
+            case info
+            case dim
         }
     }
     
-    var statusColor: String {
-        switch status {
-        case .pending: return "gray"
-        case .monitoring: return "blue"
-        case .available: return "orange"
-        case .booking: return "purple"
-        case .completed: return "green"
-        case .failed: return "red"
-        case .expired: return "gray"
-        }
+    var formattedTime: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm"
+        return formatter.string(from: timestamp)
+    }
+    
+    static func == (lhs: TerminalLine, rhs: TerminalLine) -> Bool {
+        lhs.id == rhs.id
     }
 }
 
@@ -111,36 +99,59 @@ struct TokenPackage: Codable, Identifiable {
     let bonusTokens: Int
     let priceUSD: Double
     
-    var totalTokens: Int {
-        tokenAmount + bonusTokens
-    }
+    var totalTokens: Int { tokenAmount + bonusTokens }
+    var displayPrice: String { String(format: "$%.2f", priceUSD) }
     
-    var displayPrice: String {
-        String(format: "$%.2f", priceUSD)
-    }
-    
-    var displayTokens: String {
-        if bonusTokens > 0 {
-            return "\(tokenAmount) + \(bonusTokens) bonus"
-        }
-        return "\(tokenAmount)"
+    enum CodingKeys: String, CodingKey {
+        case id
+        case name
+        case tokenAmount = "token_amount"
+        case bonusTokens = "bonus_tokens"
+        case priceUSD = "price_usd"
     }
 }
 
-// MARK: - Credential
+// MARK: - Task
 
-enum CredentialType: String, Codable {
-    case password = "password"
-    case personal = "personal"
-    case payment = "payment"
-    case apiKey = "api_key"
-}
-
-struct Credential: Codable, Identifiable {
+struct AgentTask: Codable, Identifiable {
     let id: String
-    let serviceName: String
-    let type: CredentialType
-    let createdAt: String
+    let userId: String
+    let goal: String
+    let status: TaskStatus
+    let createdAt: Date
+    let checkFrequencyMinutes: Int?
+    let expiresAt: Date?
+    
+    enum CodingKeys: String, CodingKey {
+        case id
+        case userId = "user_id"
+        case goal, status
+        case createdAt = "created_at"
+        case checkFrequencyMinutes = "check_frequency_minutes"
+        case expiresAt = "expires_at"
+    }
+}
+
+enum TaskStatus: String, Codable {
+    case pending = "pending"
+    case monitoring = "monitoring"
+    case available = "available"
+    case booking = "booking"
+    case completed = "completed"
+    case failed = "failed"
+    case expired = "expired"
+    
+    var displayText: String {
+        switch self {
+        case .pending: return "Starting..."
+        case .monitoring: return "Monitoring"
+        case .available: return "Available!"
+        case .booking: return "Booking..."
+        case .completed: return "Done"
+        case .failed: return "Failed"
+        case .expired: return "Expired"
+        }
+    }
 }
 
 // MARK: - Cost Estimate
@@ -148,38 +159,13 @@ struct Credential: Codable, Identifiable {
 struct CostEstimate: Codable {
     let estimatedTotalTokens: Int
     let numChecks: Int
-    let breakdown: CostBreakdown
     let usdEstimate: Double
     let canAfford: Bool
-    let recommendedPackages: [RecommendedPackage]
-}
-
-struct CostBreakdown: Codable {
-    let monitoringCost: Int
-    let availabilityChecksCost: Int
-    let bookingCost: Int
-    let buffer: Int
-}
-
-struct RecommendedPackage: Codable {
-    let packageId: String
-    let name: String
-    let totalTokens: Int
-    let priceUSD: Double
-    let coversTask: Bool
-}
-
-// MARK: - Frequency Option
-
-struct FrequencyOption: Codable, Identifiable {
-    let id = UUID()
-    let minutes: Int
-    let label: String
-    let risk: String
-    let estimatedTokens: Int
-    let estimatedUSD: Double
     
-    var displayPrice: String {
-        String(format: "$%.2f", estimatedUSD)
+    enum CodingKeys: String, CodingKey {
+        case estimatedTotalTokens = "estimated_total_tokens"
+        case numChecks = "num_checks"
+        case usdEstimate = "usd_estimate"
+        case canAfford = "can_afford"
     }
 }
